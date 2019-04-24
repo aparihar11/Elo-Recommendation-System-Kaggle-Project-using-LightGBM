@@ -160,14 +160,20 @@ set.seed(1)
 inTrain <- createDataPartition(data$target, p=.8)[[1]]
 dataTr <- data[inTrain,]
 dataTs <- data[-inTrain,]
-install.packages(lgbdl)
-source("lgbdl.R")
 
-lgb.dl(commit = "master", compiler = "gcc", libdll = "",
-       repo = "https://github.com/Microsoft/LightGBM", use_gpu = FALSE,
-       cores = 1)
 
-library(lightgbm)
+install_github("Microsoft/LightGBM", subdir = "R-package")
+
+
+install.packages(file.path("C:", "LightGBM", "R-package", fsep = "\\"), repos = NULL, type = "source")
+
+install.packages("cmaker")
+devtools::install_github("stnava/cmaker")
+library(cmaker)
+library(devtools)
+install.packages(file.path("C:", "LightGBM", "R-package", fsep = "\\"), repos = NULL, type = "source")
+
+devtools::install_github("Microsoft/LightGBM", subdir = "R-package")
 # lgb dataset
 train_s <- as.matrix(dataTr[,-4])
 dtrain <- lgb.Dataset(data=train_s, label = dataTr$target)

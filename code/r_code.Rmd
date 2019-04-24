@@ -24,10 +24,11 @@ When you click the **Knit** button a document will be generated that includes bo
 - Results
 - Improvement
 
-## Slide with R Output
+## Data Exploration
 
-```{r cars, echo = TRUE}
-summary(cars)
+```{r dataprep, echo =FALSE}
+summary(train$target)
+hist(train$target, breaks=100, freq=FALSE, col="lightgray", main="Train_target Distribution")
 ```
 
 ## Slide with Plot
