@@ -156,11 +156,47 @@ test.final <- test_data1
 
 library(caret)
 set.seed(1)
+write.csv(data,"finaltable.csv")
 
 inTrain <- createDataPartition(data$target, p=.8)[[1]]
 dataTr <- data[inTrain,]
 dataTs <- data[-inTrain,]
+dataTr$target<-as.factor(dataTr$target)
+dataTr<-na.omit(dataTr)
 
+logitMod <- glm(target ~ ., data=dataTr, family=binomial)
+install.packages("xgboost")
+library(xgboost)
+
+params <- list(objective = "reg:linear",
+               booster = "gbtree",
+               eval_metric = "rmse",
+               nthread = 4,
+               eta = 0.01,
+               max_depth = 8,
+               min_child_weight = 5,
+               gamma = 1,
+               subsample = 0.8,
+               colsample_bytree = 0.7,
+               colsample_bylevel = 0.6,
+               alpha = 0.1,
+               lambda = 5)
+
+data_train_final <- as.matrix(data[,-4])
+dtrain_final <- xgb.DMatrix(data = data_train_final, label = data$target)
+
+data_test_final <- as.matrix(test.final)
+dtest_final <- xgb.DMatrix(data = data_test_final)
+
+xgb_model <- xgboost(params = params, 
+                     data=dtrain_final, 
+                     nrounds = 1000, 
+                     print_every_n = 100, 
+                     early_stopping_rounds = 50)
+
+# prediction
+preds <- predict(xgb_model, newdata = dtest_final) 
+summary(preds)
 
 install_github("Microsoft/LightGBM", subdir = "R-package")
 
