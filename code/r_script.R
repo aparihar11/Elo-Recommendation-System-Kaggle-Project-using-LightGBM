@@ -1,15 +1,17 @@
+
+library(lightgbm)
 x<-c("tidyverse", "dplyr", "lubridate","ggplot2","caret")
 lapply(x, require, character.only = TRUE)
-setwd("C:/Users/aparihar/Documents/GitHub/elo_recommendation/dataset")
+setwd("C:/Users/morpheous/Desktop/passport/elo_recommendation-master/elo_recommendation-master/dataset")
 
-train <- read_csv("train.csv")
-test <- read_csv("test.csv")
-histdata <- read.csv("historical_transactions.csv",nrows = 100000)
-newdata <- read.csv("new_merchant_transactions.csv",nrow=100000)
-merchants <- read_csv("merchants.csv")
-sample <- read_csv("sample_submission.csv")
+#train <- read_csv("train.csv")
+#test <- read_csv("test.csv")
+#histdata <- read.csv("historical_transactions.csv",nrows = 100000)
+#newdata <- read.csv("new_merchant_transactions.csv",nrow=100000)
+#merchants <- read_csv("merchants.csv")
+#sample <- read_csv("sample_submission.csv")
 
-save(train,test,histdata,newdata,merchants,sample,file="data.Rdata")
+
 load("data.Rdata")
 dim(train)
 head(train)
@@ -156,7 +158,7 @@ test.final <- test_data1
 
 library(caret)
 set.seed(1)
-write.csv(data,"finaltable.csv")
+#write.csv(data,"finaltable.csv")
 
 inTrain <- createDataPartition(data$target, p=.8)[[1]]
 dataTr <- data[inTrain,]
@@ -164,8 +166,8 @@ dataTs <- data[-inTrain,]
 dataTr$target<-as.factor(dataTr$target)
 dataTr<-na.omit(dataTr)
 
-logitMod <- glm(target ~ ., data=dataTr, family=binomial)
-install.packages("xgboost")
+#logitMod <- glm(target ~ ., data=dataTr, family=binomial)
+#nstall.packages("xgboost")
 library(xgboost)
 
 params <- list(objective = "reg:linear",
@@ -198,23 +200,35 @@ xgb_model <- xgboost(params = params,
 preds <- predict(xgb_model, newdata = dtest_final) 
 summary(preds)
 
-install_github("Microsoft/LightGBM", subdir = "R-package")
 
+train_s <- as.matrix(dataTr[,-4])
+dtrain <- lgb.Dataset(data=train_s, label = dataTr$target)
 
-install.packages(file.path("C:", "LightGBM", "R-package", fsep = "\\"), repos = NULL, type = "source")
+test_s <- as.matrix(dataTs[,-4])
 
-install.packages("cmaker")
-devtools::install_github("stnava/cmaker")
-library(cmaker)
-library(devtools)
-install.packages(file.path("C:", "LightGBM", "R-package", fsep = "\\"), repos = NULL, type = "source")
+params <- list(objective="regression",
+               metric = "l2",
+               feature_fraction = 0.7,
+               bagging_fraction = 0.7,
+               bagging_freq = 5,
+               max_bin = 255,
+               lambda_l1 = 8,
+               lambda_l2 = 1.3
+               )
+#install.packages("Metrics")
+library(Metrics)
 
-devtools::install_github("Microsoft/LightGBM", subdir = "R-package")
+inTrain <- createDataPartition(data$target, p=.8)[[1]]
+dataTr <- data[inTrain,]
+dataTs <- data[-inTrain,]
+
+library(lightgbm)
 # lgb dataset
 train_s <- as.matrix(dataTr[,-4])
 dtrain <- lgb.Dataset(data=train_s, label = dataTr$target)
 
 test_s <- as.matrix(dataTs[,-4])
+
 
 params <- list(objective="regression",
                metric = "l2",
@@ -232,6 +246,23 @@ params <- list(objective="regression",
                #is_unbalance = TRUE
 )
 
+# lgb.model.cv <- lgb.cv(params = lgb.grid,
+#                       data = dtrain,
+#                       learning_rate = 0.02,
+#                       #num_leaves = 25,
+#                       num_threads = 2 ,
+#                       nrounds = 500,
+#                       early_stopping_rounds = 30,
+#                       eval_freq = 20,
+#                       #eval = lgb.normalizedgini,
+#                       #categorical_feature = categoricals.vec,
+#                       nfold = 5,
+#                       stratified = TRUE)
+
+# best.iter = lgb.model.cv$best_iter
+
+
+
 
 lgb_m <- lgb.train(params=params,
                    data=dtrain,
@@ -239,24 +270,10 @@ lgb_m <- lgb.train(params=params,
                    learning_rate=0.1, 
                    nrounds = 500)
 
+preds_lgb <- predict(lgb_m, test_s)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+summary(preds_lgb)
+rmse(dataTs$target,preds_lgb)
 
 
 
