@@ -1,0 +1,21 @@
+https://github.com/Microsoft/LightGBM/issues/1678
+
+INSTALL 64-bit R, Rtools
+
+C:
+cd C:\
+git clone --recursive https://github.com/Microsoft/LightGBM
+cd LightGBM
+git checkout master
+mkdir build && cd build
+cmake -DCMAKE_GENERATOR_PLATFORM=x64 -DUSE_R35=1  ..
+cmake --build . --target _lightgbm  --config Release
+
+Comment lines ##modify if (!file.copy("../../CMakeLists.txt", "../CMakeLists.txt", overwrite = TRUE)){ stop("Copying CMakeLists failed") }
+
+follow the below step
+    open the C:\LightGBM\R-package\src\install.libs.R
+    set use_precompile <- TRUE
+    modify if (!file.copy("../../CMakeLists.txt", "../CMakeLists.txt", overwrite = TRUE)){ stop("Copying CMakeLists failed") }
+    Rscript> install.packages(file.path("C:", "LightGBM", "R-package", fsep = "\\"), repos = NULL, type = "source")
+    done!
